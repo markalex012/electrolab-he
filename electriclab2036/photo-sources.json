@@ -23,14 +23,14 @@
   },
   "ldr": {
     "id": "ldr",
-    "url": "https://www.adafruit.com/product/161",
-    "image": "https://www.adafruit.com/images/480x360/161-00.jpg",
-    "title": "Photo cell (CdS photoresistor) : Adafruit Industries, Unique &amp; fun DIY electronics and kits",
-    "credit": "Adafruit Industries",
-    "license": "Manufacturer product photograph; copyright retained by owner",
-    "local": "assets/devices/ldr.webp",
-    "bytes": 77660,
-    "modification": "Resized only"
+    "url": "https://www.tenettech.com/product/lm393-photosensitive-light-dependent-control-sensor-ldr-module",
+    "image": "https://www.tenettech.com/s/59c9e4669bd3e7c70c5f5e6c/68a81d8f1e42c75034b334b9/smart-electronics-lm393-optical-sensitive-resistance-light-detection-photosensitive-font-b-sensor-b-font-font-b.jpg",
+    "title": "LM393 light sensor module · AO + DO",
+    "credit": "Tenet Technetronics",
+    "license": "Product photograph; copyright retained by source owner",
+    "local": "assets/devices/ldr-module.jpg",
+    "modification": "Unmodified",
+    "documentation": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/6649/ST0250%20datasheet.pdf"
   },
   "pir": {
     "id": "pir",

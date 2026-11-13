@@ -2,7 +2,7 @@
 const sensor=(id,name,unit,min,max,value,part)=>({id,name,unit,min,max,value,part});
 const temp=(v=25,max=50)=>sensor('t','טמפרטורה','°C',0,max,v,max>100?'MAX6675 + K-type':'DS18B20');
 const level=(v=70)=>sensor('l','מפלס מים','%',0,100,v,'מצוף / חיישן מפלס');
-const light=(v=60)=>sensor('x','עוצמת אור','%',0,100,v,'LDR + מחלק מתח');
+const light=(v=60)=>sensor('x','עוצמת אור','%',0,100,v,'LDR / LM393 · AO + DO');
 const humidity=(v=50)=>sensor('h','לחות','%',0,100,v,'DHT22');
 const out=(name,kind,watts,rule,drive='ממסר')=>({name,kind,watts,rule,drive});
 const project=(id,name,category,icon,desc,sensors,outputs,target=25,range=[5,40],unit='°C',scene='room',extra={})=>({id,name,category,icon,desc,sensors,outputs,target,range,unit,scene,...extra});

@@ -1,0 +1,32 @@
+.photo{background-image:url(assets/projects.png);background-size:500% 500%;background-repeat:no-repeat;}
+.photo-home{background-position:0% 0%;}
+.photo-greenhouse{background-position:25% 0%;}
+.photo-aquarium{background-position:50% 0%;}
+.photo-fridge{background-position:75% 0%;}
+.photo-nursery{background-position:100% 0%;}
+.photo-bar{background-position:0% 25%;}
+.photo-parking{background-position:25% 25%;}
+.photo-boiler{background-position:50% 25%;}
+.photo-pool{background-position:75% 25%;}
+.photo-classroom{background-position:100% 25%;}
+.photo-washer{background-position:0% 50%;}
+.photo-pizza{background-position:25% 50%;}
+.photo-street{background-position:50% 50%;}
+.photo-irrigation{background-position:75% 50%;}
+.photo-air{background-position:100% 50%;}
+.photo-water{background-position:0% 75%;}
+.photo-energy{background-position:25% 75%;}
+.photo-compost{background-position:50% 75%;}
+.photo-aquaponics{background-position:75% 75%;}
+.photo-sauna{background-position:100% 75%;}
+.photo-mall{background-position:0% 100%;}
+.photo-greenroof{background-position:25% 100%;}
+.photo-leak{background-position:50% 100%;}
+.photo-geothermal{background-position:75% 100%;}
+.photo-beehive{background-position:100% 100%;}
+.photo-pets{background-image:url(assets/extra.png);background-size:300% 200%;background-position:0% 0%;}
+.photo-recycling{background-image:url(assets/extra.png);background-size:300% 200%;background-position:50% 0%;}
+.photo-agriwater{background-image:url(assets/extra.png);background-size:300% 200%;background-position:100% 0%;}
+.photo-factory{background-image:url(assets/extra.png);background-size:300% 200%;background-position:0% 100%;}
+.photo-restaurant{background-image:url(assets/extra.png);background-size:300% 200%;background-position:50% 100%;}
+.hero-art{background-image:url(assets/extra.png);background-size:300% 200%;background-position:100% 100%;}

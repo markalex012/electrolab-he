@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');
+const {PROJECTS}=require('./data.js');
+const {evaluate,defaultLimits}=require('./model.js');
+const p=PROJECTS.find(p=>p.id==='home'),lim=defaultLimits(p),base=Object.fromEntries(p.sensors.map(s=>[s.id,s.value]));
+const calc=changes=>evaluate(p,{...base,b:70,c:0,z:1,...changes},p.target,[],0,lim);
+assert.equal(p.sensors.length,8);assert.equal(p.outputs.length,8);
+assert.equal(calc({a:0})[3],0);assert.equal(calc({a:1})[3],1);
+assert.equal(calc({d:1,a:0})[4],1);assert.equal(calc({d:1,a:1})[4],0);
+assert.equal(calc({w:1,a:1})[4],1);assert.equal(calc({w:1,z:0})[4],0);
+for(const b of [0,25,50,75,100])assert.equal(calc({b})[2],b/100);
+assert.equal(calc({c:1,p:0,b:100,x:0})[2],0);assert.equal(calc({c:1,p:1,b:100,x:0})[2],1);
+assert.equal(calc({c:1,p:1,b:100,x:90})[2],0);
+assert.equal(calc({f:lim.f.max})[5],0);assert.equal(calc({f:lim.f.max+.1})[5],1);
+const fire=calc({f:100,t:10,b:100});assert.equal(fire[3],1);assert.equal(fire[5],1);assert.equal(fire[6],0);assert.equal(fire[7],1);assert.deepEqual(fire.slice(0,3),[0,0,0]);
+const gas=calc({g:100,t:10,b:100});assert.equal(gas[6],1);assert.equal(gas[7],1);assert.equal(gas[5],0);assert.deepEqual(gas.slice(0,3),[0,0,0]);
+assert.equal(calc({g:lim.g.max})[6],0);assert.equal(calc({g:100,f:100})[6],0);
+console.log('PASS: home RFID, intrusion/armed/window, manual/auto dimming, flame/gas thresholds and priority interlocks.');

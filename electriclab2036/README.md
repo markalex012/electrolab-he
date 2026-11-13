@@ -18,6 +18,10 @@ Browser verification: all 30 project pages rendered with sensor, load and schema
 
 Every photographed schematic component links to its own photo-sources.html card in the same tab. SVG links are keyboard accessible; image and component-label hit areas are covered.
 
-control-interfaces.js and control-audit.json document all 92 output channels. Nominal 3.3V control front ends were checked against manufacturer documents. This is a document-based design review, not hardware testing or certification. 53 channels need an exact compatible downstream controller/load model. Mains and coil power remain separate from GPIO logic.
+control-interfaces.js and control-audit.json document all 97 output channels. Nominal 3.3V control front ends were checked against manufacturer documents. This is a document-based design review, not hardware testing or certification. 54 channels need an exact compatible downstream controller/load model. Mains and coil power remain separate from GPIO logic.
 
 Corrections include the Carlo Gavazzi SSR identity and model-specific input range, replacement of the under-rated Mini Relay in the design, and explicit MOSFET / Power Relay / I2C-to-0-10V interfaces instead of direct GPIO-to-mains-equipment assumptions.
+
+## Smart home expansion
+
+Eight sensor inputs and eight actuator channels. RFID grants expire after five simulation seconds; unknown tags deny entry. Armed door/window alarm, separate fire/gas warning, flame-controlled sprinkler valve, full gas ventilation inhibited by flame, and hazard cutoff of normal heat/light/ceiling fan. Manual 0–100% dimmer and optional light/presence automation update both the photographic lamp and schematic continuously. Lock uses a separate 12V DC MOSFET path. MQ-2 uses 5V and requires safe ADC scaling. All life-safety behavior is explicitly an educational simulation. Run `node tests-home.cjs` in addition to the shared model tests.

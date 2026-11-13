@@ -718,5 +718,35 @@
     "license": "Manufacturer product photograph; copyright retained by owner",
     "local": "assets/devices/dac010.webp",
     "modification": "Resized only"
+  },
+  "flame": {
+    "id": "flame",
+    "url": "https://www.dfrobot.com/product-195.html",
+    "image": "https://dfimg.dfrobot.com/enshop/image/data/DFR0076/V2.0/flame1_0x0.jpg",
+    "title": "DFRobot DFR0076 · analog flame sensor",
+    "credit": "DFRobot",
+    "license": "Manufacturer product photograph; copyright retained by owner",
+    "local": "assets/devices/flame.jpg",
+    "modification": "Unmodified"
+  },
+  "mq2": {
+    "id": "mq2",
+    "url": "https://www.dfrobot.com/product-681.html",
+    "image": "https://dfimg.dfrobot.com/enshop/image/data/SEN0127/SEN0127_Main_01.jpg",
+    "title": "DFRobot SEN0127 · MQ-2 combustible gas sensor",
+    "credit": "DFRobot",
+    "license": "Manufacturer product photograph; copyright retained by owner",
+    "local": "assets/devices/mq2.jpg",
+    "modification": "Unmodified"
+  },
+  "lock": {
+    "id": "lock",
+    "url": "https://www.adafruit.com/product/1512",
+    "image": "https://www.adafruit.com/images/480x360/1512-04.jpg",
+    "title": "Adafruit 1512 · 12V DC lock solenoid",
+    "credit": "Adafruit Industries",
+    "license": "Manufacturer product photograph; copyright retained by owner",
+    "local": "assets/devices/lock.jpg",
+    "modification": "Unmodified"
   }
 }

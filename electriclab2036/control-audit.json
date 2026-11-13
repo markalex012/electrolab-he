@@ -120,6 +120,22 @@
         "https://www.adafruit.com/product/3191",
         "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
       ]
+    },
+    "dcLock": {
+      "id": "dcLock",
+      "key": "mosfet",
+      "stage": null,
+      "label": "GPIO 3.3V → MOSFET → מנעול 12V DC",
+      "input": "GPIO 0/3.3V",
+      "supply": "12V DC נפרד למנעול Adafruit 1512 · כ־650mA",
+      "method": "שחרור בפולס של 5 שניות בהדמיה",
+      "evidence": "Adafruit 5648: כניסת 3–20V, עומס 3–30V DC עד 1.5A רציף; מנעול 1512 פועל ב־12V DC.",
+      "note": "נדרשת הגנת סליל בהתאם ליצרן. זהו דגם לימודי fail-secure: ללא מתח נשאר נעול. שחרור חירום בהדמיה אינו מבטיח מוצא בטוח באובדן חשמל; דלת אמיתית דורשת פתרון יציאה מאושר. אין להזין סליל מה־GPIO.",
+      "pending": false,
+      "refs": [
+        "https://www.adafruit.com/product/1512",
+        "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts"
+      ]
     }
   },
   "projects": [
@@ -163,7 +179,7 @@
         },
         {
           "channel": 3,
-          "load": "תאורת חדר",
+          "load": "תאורת חדר · דימר",
           "watts": 40,
           "nominalCurrentA": 0.174,
           "profile": "analogLight",
@@ -176,6 +192,90 @@
           "sources": [
             "https://www.dfrobot.com/product-2613.html",
             "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        },
+        {
+          "channel": 4,
+          "load": "מנעול חשמלי · שחרור",
+          "watts": 7.8,
+          "nominalCurrentA": 0.65,
+          "profile": "dcLock",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V",
+          "supply": "12V DC נפרד למנעול Adafruit 1512 · כ־650mA",
+          "chain": "GPIO 3.3V → MOSFET → מנעול 12V DC",
+          "limitation": "נדרשת הגנת סליל בהתאם ליצרן. זהו דגם לימודי fail-secure: ללא מתח נשאר נעול. שחרור חירום בהדמיה אינו מבטיח מוצא בטוח באובדן חשמל; דלת אמיתית דורשת פתרון יציאה מאושר. אין להזין סליל מה־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/1512",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts"
+          ]
+        },
+        {
+          "channel": 5,
+          "load": "אזעקת דלת וחלון",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 6,
+          "load": "שסתום ספרינקלרים NC",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 7,
+          "load": "מפוח פינוי גז",
+          "watts": 120,
+          "nominalCurrentA": 0.522,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד. בהדמיה זו פינוי גז הוא 0/100% בלבד ונחסם בלהבה. נדרש דגם אוורור המתאים לגז ולסביבת ההתקנה; התצלום אינו דירוג נגד פיצוץ.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 8,
+          "load": "התראת אש / גז",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
           ]
         }
       ]

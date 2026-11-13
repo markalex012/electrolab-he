@@ -29,6 +29,12 @@ function evaluate(p,v,target,previous=[],phase=0,limits=defaultLimits(p,target))
  const below=id=>clamp((low(id)-v[id])/(high(id)-low(id)));
  const wet=!('l'in v)||v.l>low('l');
  const power=p.outputs.map(o=>{let request=0;switch(o.rule){
+ case 'homeLight':request=(v.c? v.p?below('x'):0:1)*clamp((v.b??70)/100);break;
+ case 'homeUnlock':request=v.a||v.f>high('f')?1:0;break;
+ case 'homeIntrusion':request=(v.z??1)&&((v.d&&!v.a)||v.w)?1:0;break;
+ case 'homeFire':request=v.f>high('f')?1:0;break;
+ case 'homeGas':request=v.g>high('g')&&!(v.f>high('f'))?1:0;break;
+ case 'homeHazard':request=v.f>high('f')||v.g>high('g')?1:0;break;
  case 'feed':request=v.p?below('f'):0;break;
  case 'bowlFill':request=below('l');break;
  case 'massLow':request=below('f');break;
@@ -76,6 +82,7 @@ function evaluate(p,v,target,previous=[],phase=0,limits=defaultLimits(p,target))
  // Fixed-speed compressors, solenoids, UV lamps and alarms use suitable discrete drivers.
  return controlMode(o)==='proportional'?request:(request>0?1:0);
  });
+ if(p.id==='home'&&(v.f>high('f')||v.g>high('g'))){for(const i of [0,1,2])power[i]=0;}
  if(p.id==='energy'){
   let remaining=Math.max(0,high('w')-v.w);
   // Essential light, ventilation, heating, in that order; account for actual duty.
@@ -84,7 +91,8 @@ function evaluate(p,v,target,previous=[],phase=0,limits=defaultLimits(p,target))
  return power;
 }
 function controlMode(o){
- return ['fan','heater','mist'].includes(o.kind)||o.kind==='pump'&&['dry','irrigate','lowHumidity','dirtyWater','solar','overflow','circulateHeat'].includes(o.rule)||o.kind==='lamp'&&['dark','darkOccupied'].includes(o.rule)?'proportional':'discrete';
+ if(o.rule==='homeGas')return 'discrete';
+ return ['fan','heater','mist'].includes(o.kind)||o.kind==='pump'&&['dry','irrigate','lowHumidity','dirtyWater','solar','overflow','circulateHeat'].includes(o.rule)||o.kind==='lamp'&&['dark','darkOccupied','homeLight'].includes(o.rule)?'proportional':'discrete';
 }
 function driveLabel(o){
  if(o.kind==='heater')return 'SSR במעבר אפס · חלון זמן יחסי';
@@ -157,3 +165,5 @@ RULES.budgetFan[1]='אוורור יחסי מעל Tmax, בכפוף לתקציב �
 RULES.budgetHeat[1]='חימום יחסי מתחת ל־Tmin לפי התקציב שנותר אחרי תאורה ואוורור';
 
 Object.assign(RULES,{feed:['','מזין פועל מתחת ל־Massmin ורק עם תג מורשה'],bowlFill:['','מילוי מים מתחת ל־Levelmin'],massLow:['','התראת משקל מתחת למינימום'],massHigh:['','התראת משקל מעל למקסימום'],overflow:['','ניקוז מאגר מעל Levelmax'],leakDrain:['','ניקוז הצפה מעל Levelmax'],leakAlarm:['','התראה על מפלס או לחות מעל המקסימום'],supplyWater:['','שסתום NC מוזן רק ללא רטיבות; ללא מתח נסגר'],conveyor:['','מסוע פועל עם פריט, מגן סגור וללא עומס יתר'],circulateHeat:['','סחרור יחסי בדרישת חימום ובלחץ לולאה תקין'],geoHeat:['','מדחס לחימום רק עם ספיקה ולחץ תקינים'],loopFault:['','התראת לחץ מחוץ לתחום'],gate:['','פקודת פתיחה לבקר מחסום כאשר הכניסה מאושרת וללא מכשול'],factoryAlarm:['','התראה בחום, עשן או פתיחת מגן'],foodHeat:['','חימום יחסי מתחת ל־Tmin ורק בעמדה פעילה'],occupied:['','תאורה רק כשהעמדה פעילה']});
+
+Object.assign(RULES,{homeLight:['','עמעום ידני 0–100%; במצב אוטומטי גם לפי אור ונוכחות. כיבוי בעת אש או גז'],homeUnlock:['','תג מורשה משחרר ל־5 שניות; זיהוי להבה מבקש שחרור חירום בהדמיה'],homeIntrusion:['','כאשר האבטחה דרוכה: דלת ללא תג מורשה או חלון פתוח מפעילים אזעקה'],homeFire:['','פתיחת שסתום ספרינקלרים מעל Flame max; זו הדמיה ולא בקר כיבוי מאושר'],homeGas:['','פינוי ב־100% מעל Gas max, רק ללא להבה; אין להניע מפוח רגיל באטמוספרה נפיצה'],homeHazard:['','התראת אש או גז מעל הסף; חימום, מאוורר תקרה ותאורה מתנתקים']});

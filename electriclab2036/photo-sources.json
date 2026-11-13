@@ -665,5 +665,27 @@
     "local": "assets/devices/drainPump.webp",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "modification": "Resized only"
+  },
+  "ovenElement": {
+    "id": "ovenElement",
+    "url": "https://csb.co.il/en/product/%D7%92%D7%95%D7%A3-%D7%97%D7%99%D7%9E%D7%95%D7%9D-%D7%A2%D7%9C%D7%99%D7%95%D7%9F-%D7%95%D7%92%D7%A8%D7%99%D7%9C-%D7%9E%D7%A7%D7%95%D7%A8%D7%99-%D7%9C%D7%AA%D7%A0%D7%95%D7%A8-%D7%91%D7%95%D7%A9-00773/",
+    "image": "https://csb.co.il/wp-content/uploads/2026/05/00773539.webp",
+    "title": "Oven upper / grill heating element",
+    "credit": "CSB Service",
+    "license": "Product photograph; copyright retained by source owner",
+    "local": "assets/devices/ovenElement.webp",
+    "modification": "Resized only"
+  },
+  "saunaHeater": {
+    "id": "saunaHeater",
+    "url": "https://commons.wikimedia.org/wiki/File:Tulikivi_Nuoska_Sauna_Heater.jpg",
+    "commonsFile": "File:Tulikivi_Nuoska_Sauna_Heater.jpg",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/Tulikivi_Nuoska_Sauna_Heater.jpg/500px-Tulikivi_Nuoska_Sauna_Heater.jpg",
+    "title": "Electric sauna heater in a Finnish home sauna",
+    "credit": "Tulikivi2012",
+    "license": "CC BY-SA 3.0",
+    "local": "assets/devices/saunaHeater.webp",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "modification": "Resized only"
   }
 }

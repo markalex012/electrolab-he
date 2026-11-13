@@ -13,3 +13,11 @@ Run node tests.cjs for simulation checks. ESP-NOW, mains wiring and Arduino code
 All 30 project interiors use downloaded real-world hardware photographs, including the controller, touchscreen, input sensors, switching devices, loads and wiring illustrations. Sources, authors, license notices and resize/crop notes are recorded in photo-sources.json and the linked photo-sources.html page. Unspecified equipment models are representative examples, not purchase specifications. The generated main catalogue imagery is unchanged.
 
 Browser verification: all 30 project pages rendered with sensor, load and schematic photos; no broken loaded images. Existing 90 model boundary scenarios passed.
+
+## 3.3V control interface review
+
+Every photographed schematic component links to its own photo-sources.html card in the same tab. SVG links are keyboard accessible; image and component-label hit areas are covered.
+
+control-interfaces.js and control-audit.json document all 92 output channels. Nominal 3.3V control front ends were checked against manufacturer documents. This is a document-based design review, not hardware testing or certification. 53 channels need an exact compatible downstream controller/load model. Mains and coil power remain separate from GPIO logic.
+
+Corrections include the Carlo Gavazzi SSR identity and model-specific input range, replacement of the under-rated Mini Relay in the design, and explicit MOSFET / Power Relay / I2C-to-0-10V interfaces instead of direct GPIO-to-mains-equipment assumptions.

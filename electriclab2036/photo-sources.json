@@ -449,14 +449,15 @@
     "id": "ssr",
     "image": "https://upload.wikimedia.org/wikipedia/commons/4/40/CarloGavazzi_Solid_State_Relay.png",
     "url": "https://commons.wikimedia.org/wiki/File:CarloGavazzi_Solid_State_Relay.png",
-    "title": "solid state relay Fotek",
+    "title": "Carlo Gavazzi RM1A family · design example RM1A23D25",
     "credit": "Jason Demicoli",
     "license": "CC BY-SA 4.0",
     "commonsFile": "File:CarloGavazzi_Solid_State_Relay.png",
     "local": "assets/devices/ssr.webp",
     "bytes": 330916,
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "modification": "Resized only"
+    "modification": "Resized only",
+    "modelNote": "Family photograph, not identification of the exact pictured suffix. RM1A23D25: 3–32V DC input; RM1A40/48/60 D variants: 4–32V DC. The design below drives the selected DC-input SSR at 5V through a 3.3V-compatible MOSFET interface."
   },
   "contactor": {
     "id": "contactor",
@@ -686,6 +687,36 @@
     "license": "CC BY-SA 3.0",
     "local": "assets/devices/saunaHeater.webp",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "modification": "Resized only"
+  },
+  "mosfet": {
+    "url": "https://www.adafruit.com/product/5648",
+    "title": "Adafruit STEMMA MOSFET Driver · 3.3V logic input",
+    "image": "https://cdn-shop.adafruit.com/480x360/5648-04.jpg",
+    "id": "mosfet",
+    "credit": "Adafruit Industries",
+    "license": "Manufacturer product photograph; copyright retained by owner",
+    "local": "assets/devices/mosfet.webp",
+    "modification": "Resized only"
+  },
+  "relayPower": {
+    "url": "https://www.adafruit.com/product/3191",
+    "title": "Adafruit Power Relay FeatherWing · 3.3V logic / 3.3V coil rail",
+    "image": "https://www.adafruit.com/images/480x360/3191-04.jpg",
+    "id": "relayPower",
+    "credit": "Adafruit Industries",
+    "license": "Manufacturer product photograph; copyright retained by owner",
+    "local": "assets/devices/relayPower.webp",
+    "modification": "Resized only"
+  },
+  "dac010": {
+    "url": "https://www.dfrobot.com/product-2613.html",
+    "title": "DFRobot GP8403 · I2C 3.3V to 0–10V DAC",
+    "image": "https://dfimg.dfrobot.com/enshop/DFR0971/DFR0971_Main_01.jpg",
+    "id": "dac010",
+    "credit": "DFRobot",
+    "license": "Manufacturer product photograph; copyright retained by owner",
+    "local": "assets/devices/dac010.webp",
     "modification": "Resized only"
   }
 }

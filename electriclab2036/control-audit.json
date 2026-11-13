@@ -1,0 +1,1864 @@
+{
+  "reviewed": "2026-11-13",
+  "scope": "Document-based compatibility of selected control front ends with nominal 3.3V ESP32 logic. Not hardware testing, not load certification, not construction-ready mains wiring.",
+  "findings": [
+    "SSR photo is Carlo Gavazzi, not Fotek. Family photograph cannot establish the exact model suffix.",
+    "Mini Relay 2895 is not the selected mains output module; Power Relay 3191 is used within its ratings.",
+    "Manual wall dimmer and generic VFD cannot be connected directly to a GPIO.",
+    "All actuator paths explicitly include a 3.3V-compatible control front end and separate coil/load supplies.",
+    "Downstream motor/controller/light/humidifier compatibility remains conditional where no exact device model was supplied."
+  ],
+  "interfaces": {
+    "heater": {
+      "id": "heater",
+      "key": "mosfet",
+      "stage": "ssr",
+      "label": "GPIO 3.3V → MOSFET → SSR 5V",
+      "input": "GPIO 0/3.3V DC",
+      "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+      "method": "חלונות זמן איטיים · SSR במעבר אפס",
+      "evidence": "Adafruit 5648: כניסת לוגיקה 3–20V; ‏RM1A23D25: כניסה 3–32V DC, זרם כניסה עד 12mA.",
+      "note": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+      "pending": false,
+      "refs": [
+        "https://www.adafruit.com/product/5648",
+        "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+        "https://www.gavazzionline.com/pdf/rm1a.pdf"
+      ]
+    },
+    "analogMotor": {
+      "id": "analogMotor",
+      "key": "dac010",
+      "stage": null,
+      "label": "I²C 3.3V → DAC → בקר 0–10V",
+      "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+      "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+      "method": "0–10V למנוע EC / בקר מהירות תואם בלבד",
+      "evidence": "DFR0971 / GP8403: הזנה 3.3–5V, רמת HIGH ב־I²C ‏2.7–5V, יציאה 0–10V.",
+      "note": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+      "pending": true,
+      "refs": [
+        "https://www.dfrobot.com/product-2613.html"
+      ]
+    },
+    "analogLight": {
+      "id": "analogLight",
+      "key": "dac010",
+      "stage": null,
+      "label": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+      "input": "I²C 3.3V · לא דימר קיר ידני",
+      "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+      "method": "עמעום 0–10V דרך כניסה ייעודית בדרייבר",
+      "evidence": "DFR0971: כניסת I²C תואמת 3.3V. דוגמת HLG B: ממשק DIM דורש 1–10V או PWM של 10V, ולא GPIO ‏3.3V ישיר.",
+      "note": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+      "pending": true,
+      "refs": [
+        "https://www.dfrobot.com/product-2613.html",
+        "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+      ]
+    },
+    "analogMist": {
+      "id": "analogMist",
+      "key": "dac010",
+      "stage": null,
+      "label": "I²C 3.3V → DAC → בקר מכשיר תואם",
+      "input": "I²C 3.3V בצד ESP32",
+      "supply": "3.3V DC למודול DAC; הזנה נפרדת למכשיר",
+      "method": "ממשק 0–10V רק אם יצרן המכשיר מתיר",
+      "evidence": "תאימות 3.3V אומתה לממיר DFR0971; ממשק מכשיר האדים עצמו לא נבחר.",
+      "note": "לא כל מכשיר אדים מאפשר ויסות חיצוני. בהיעדר דגם מתאים זו הדמיה בלבד; אין למתג או לעמעם שרירותית את הזנת הרשת כדי לקבל ויסות יחסי.",
+      "pending": true,
+      "refs": [
+        "https://www.dfrobot.com/product-2613.html"
+      ]
+    },
+    "contactor": {
+      "id": "contactor",
+      "key": "mosfet",
+      "stage": "contactor",
+      "label": "GPIO 3.3V → MOSFET → סליל 24V DC",
+      "input": "GPIO 0/3.3V DC",
+      "supply": "24V DC מתוכנן לסליל; לא 3.3V לסליל",
+      "method": "מגען DC מתאים עם ממשק MOSFET והגנת סליל",
+      "evidence": "Adafruit 5648: כניסת לוגיקה 3–20V, הזנת עומס 3–30V, עד 1.5A רציף לפי היצרן.",
+      "note": "צילום המגען אינו מזהה מתח סליל. יש לבחור דגם סליל 24V DC, לבדוק זרם התנעה/החזקה והגנת סליל לפי היצרן. אין לחבר סליל AC או סליל רשת לדרייבר DC זה.",
+      "pending": true,
+      "refs": [
+        "https://www.adafruit.com/product/5648",
+        "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts"
+      ]
+    },
+    "controller": {
+      "id": "controller",
+      "key": "relayPower",
+      "stage": null,
+      "label": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+      "input": "GPIO 0/3.3V DC ל־SET",
+      "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+      "method": "מגע יבש לכניסת RUN / ENABLE בבקר המקורי",
+      "evidence": "Power Relay FeatherWing 3191: תואם Feather לוגיקה 3.3V; סליל צורך כ־100mA ממסילת 3.3V ולא מפין GPIO.",
+      "note": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+      "pending": true,
+      "refs": [
+        "https://www.adafruit.com/product/3191",
+        "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+        "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+      ]
+    },
+    "switch": {
+      "id": "switch",
+      "key": "relayPower",
+      "stage": null,
+      "label": "GPIO 3.3V → Power Relay → עומס",
+      "input": "GPIO 0/3.3V DC ל־SET",
+      "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+      "method": "מיתוג ON/OFF בלבד · לא PWM מכני",
+      "evidence": "Adafruit 3191: לוגיקה 3.3V; עד 5A עומס התנגדותי ב־240VAC. היצרן מנחה להפחית בקירוב לחצי בעומס השראותי.",
+      "note": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+      "pending": false,
+      "refs": [
+        "https://www.adafruit.com/product/3191",
+        "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+      ]
+    }
+  },
+  "projects": [
+    {
+      "id": "home",
+      "name": "בית חכם",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מאוורר תקרה",
+          "watts": 70,
+          "nominalCurrentA": 0.304,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "רדיאטור",
+          "watts": 1500,
+          "nominalCurrentA": 6.522,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת חדר",
+          "watts": 40,
+          "nominalCurrentA": 0.174,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "greenhouse",
+      "name": "חממה מבוקרת",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מפוח חממה",
+          "watts": 120,
+          "nominalCurrentA": 0.522,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מחמם חממה",
+          "watts": 1200,
+          "nominalCurrentA": 5.217,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "משאבת השקיה",
+          "watts": 350,
+          "nominalCurrentA": 1.522,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 4,
+          "load": "תאורת גידול",
+          "watts": 180,
+          "nominalCurrentA": 0.783,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aquarium",
+      "name": "אקווריום מבוקר",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מחמם מים",
+          "watts": 200,
+          "nominalCurrentA": 0.87,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "משאבת סינון",
+          "watts": 35,
+          "nominalCurrentA": 0.152,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "משאבת אוויר",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 4,
+          "load": "תאורת אקווריום",
+          "watts": 25,
+          "nominalCurrentA": 0.109,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fridge",
+      "name": "מקרר מבוקר",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מדחס קירור",
+          "watts": 180,
+          "nominalCurrentA": 0.783,
+          "profile": "controller",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+          "limitation": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+            "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מאוורר מאייד",
+          "watts": 20,
+          "nominalCurrentA": 0.087,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת פנים",
+          "watts": 10,
+          "nominalCurrentA": 0.043,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nursery",
+      "name": "חדר לטיפול בתינוק",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מחמם חדר",
+          "watts": 1000,
+          "nominalCurrentA": 4.348,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מאוורר",
+          "watts": 35,
+          "nominalCurrentA": 0.152,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "מכשיר אדים",
+          "watts": 30,
+          "nominalCurrentA": 0.13,
+          "profile": "analogMist",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V בצד ESP32",
+          "supply": "3.3V DC למודול DAC; הזנה נפרדת למכשיר",
+          "chain": "I²C 3.3V → DAC → בקר מכשיר תואם",
+          "limitation": "לא כל מכשיר אדים מאפשר ויסות חיצוני. בהיעדר דגם מתאים זו הדמיה בלבד; אין למתג או לעמעם שרירותית את הזנת הרשת כדי לקבל ויסות יחסי.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 4,
+          "load": "תאורת לילה",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bar",
+      "name": "בר מבוקר",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מדחס משקאות",
+          "watts": 160,
+          "nominalCurrentA": 0.696,
+          "profile": "controller",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+          "limitation": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+            "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מאוורר",
+          "watts": 18,
+          "nominalCurrentA": 0.078,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת דלפק",
+          "watts": 35,
+          "nominalCurrentA": 0.152,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "parking",
+      "name": "חניון מבוקר",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מפוח פינוי",
+          "watts": 750,
+          "nominalCurrentA": 3.261,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "תאורת חניון",
+          "watts": 180,
+          "nominalCurrentA": 0.783,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "נורת התראה",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "boiler",
+      "name": "דוד שמש חסכוני",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "גוף חימום דוד",
+          "watts": 2500,
+          "nominalCurrentA": 10.87,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "משאבת סחרור",
+          "watts": 60,
+          "nominalCurrentA": 0.261,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pool",
+      "name": "בריכה מבוקרת",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "משאבת סינון",
+          "watts": 750,
+          "nominalCurrentA": 3.261,
+          "profile": "contactor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "24V DC מתוכנן לסליל; לא 3.3V לסליל",
+          "chain": "GPIO 3.3V → MOSFET → סליל 24V DC",
+          "limitation": "צילום המגען אינו מזהה מתח סליל. יש לבחור דגם סליל 24V DC, לבדוק זרם התנעה/החזקה והגנת סליל לפי היצרן. אין לחבר סליל AC או סליל רשת לדרייבר DC זה.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "משאבת חום",
+          "watts": 1800,
+          "nominalCurrentA": 7.826,
+          "profile": "controller",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+          "limitation": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+            "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת סביבת הבריכה",
+          "watts": 80,
+          "nominalCurrentA": 0.348,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "classroom",
+      "name": "כיתה מודרנית",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "אוורור כיתה",
+          "watts": 120,
+          "nominalCurrentA": 0.522,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מיזוג אוויר",
+          "watts": 1500,
+          "nominalCurrentA": 6.522,
+          "profile": "controller",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+          "limitation": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+            "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת כיתה",
+          "watts": 160,
+          "nominalCurrentA": 0.696,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "washer",
+      "name": "מכונת כביסה",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "שסתום מילוי",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "גוף חימום",
+          "watts": 1800,
+          "nominalCurrentA": 7.826,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "מנוע תוף",
+          "watts": 350,
+          "nominalCurrentA": 1.522,
+          "profile": "controller",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+          "limitation": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+            "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+          ]
+        },
+        {
+          "channel": 4,
+          "load": "משאבת ריקון",
+          "watts": 40,
+          "nominalCurrentA": 0.174,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizza",
+      "name": "תנור פיצה",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "גוף חימום עליון",
+          "watts": 1500,
+          "nominalCurrentA": 6.522,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "גוף חימום תחתון",
+          "watts": 1500,
+          "nominalCurrentA": 6.522,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "מאוורר קירור מעטפת",
+          "watts": 35,
+          "nominalCurrentA": 0.152,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 4,
+          "load": "תאורת תנור",
+          "watts": 15,
+          "nominalCurrentA": 0.065,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "street",
+      "name": "תאורת רחוב",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "תאורת רחוב",
+          "watts": 80,
+          "nominalCurrentA": 0.348,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "תאורת תגבור",
+          "watts": 80,
+          "nominalCurrentA": 0.348,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "irrigation",
+      "name": "מערכת השקיה",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "משאבת השקיה",
+          "watts": 550,
+          "nominalCurrentA": 2.391,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "שסתום אזור א׳",
+          "watts": 10,
+          "nominalCurrentA": 0.043,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת שירות",
+          "watts": 12,
+          "nominalCurrentA": 0.052,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "air",
+      "name": "בקרת איכות אוויר",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מפוח אוויר צח",
+          "watts": 100,
+          "nominalCurrentA": 0.435,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מסנן אוויר",
+          "watts": 55,
+          "nominalCurrentA": 0.239,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "נורת התראה",
+          "watts": 5,
+          "nominalCurrentA": 0.022,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "water",
+      "name": "בקרת איכות מים",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "משאבת סינון",
+          "watts": 180,
+          "nominalCurrentA": 0.783,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מחטא UV סגור",
+          "watts": 25,
+          "nominalCurrentA": 0.109,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "משאבת סחרור",
+          "watts": 45,
+          "nominalCurrentA": 0.196,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "energy",
+      "name": "ניהול אנרגיה",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "חימום בעדיפות נמוכה",
+          "watts": 1500,
+          "nominalCurrentA": 6.522,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "אוורור בעדיפות גבוהה",
+          "watts": 80,
+          "nominalCurrentA": 0.348,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורה חיונית",
+          "watts": 100,
+          "nominalCurrentA": 0.435,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "compost",
+      "name": "מערכת קומפוסטציה",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מפוח אוורור",
+          "watts": 70,
+          "nominalCurrentA": 0.304,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "משאבת הרטבה",
+          "watts": 40,
+          "nominalCurrentA": 0.174,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "מחמם התחלתי",
+          "watts": 300,
+          "nominalCurrentA": 1.304,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aquaponics",
+      "name": "בקרת אקוופוניקה",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "משאבת סחרור",
+          "watts": 55,
+          "nominalCurrentA": 0.239,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "משאבת אוויר",
+          "watts": 10,
+          "nominalCurrentA": 0.043,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "מחמם מים",
+          "watts": 200,
+          "nominalCurrentA": 0.87,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 4,
+          "load": "תאורת גידול",
+          "watts": 100,
+          "nominalCurrentA": 0.435,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sauna",
+      "name": "סאונה מבוקרת",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "תנור סאונה",
+          "watts": 4500,
+          "nominalCurrentA": 19.565,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מפוח אוורור",
+          "watts": 45,
+          "nominalCurrentA": 0.196,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת סאונה",
+          "watts": 20,
+          "nominalCurrentA": 0.087,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pets",
+      "name": "האכלת בעלי חיים",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מזין בורגי",
+          "watts": 90,
+          "nominalCurrentA": 0.391,
+          "profile": "controller",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+          "limitation": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+            "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "שסתום מילוי קערה",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mall",
+      "name": "קניון מבוקר",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מפוח אזורי",
+          "watts": 180,
+          "nominalCurrentA": 0.783,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מזגן אזורי",
+          "watts": 1800,
+          "nominalCurrentA": 7.826,
+          "profile": "controller",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+          "limitation": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+            "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת אזור",
+          "watts": 200,
+          "nominalCurrentA": 0.87,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "beehive",
+      "name": "כוורת מבוקרת",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מחמם כוורת מוגן",
+          "watts": 80,
+          "nominalCurrentA": 0.348,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מפוח אוורור",
+          "watts": 25,
+          "nominalCurrentA": 0.109,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "נורת משקל נמוך",
+          "watts": 5,
+          "nominalCurrentA": 0.022,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "greenroof",
+      "name": "גג ירוק אוטומטי",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "משאבת השקיה",
+          "watts": 250,
+          "nominalCurrentA": 1.087,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "תאורת גידול",
+          "watts": 100,
+          "nominalCurrentA": 0.435,
+          "profile": "analogLight",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא דימר קיר ידני",
+          "supply": "3.3V DC למודול DAC; ‏230V AC לדרייבר LED תואם",
+          "chain": "I²C 3.3V → DAC → דרייבר LED 0–10V",
+          "limitation": "יש לבחור דרייבר LED עם מפרט 0–10V ומצב כיבוי מוגדר. DIM- אינו בהכרח מחובר ל־V-. דימר הקיר המצולם אינו ממשק ESP32 ולא נבחר לשרשרת. המודול אינו מבודד; חיבור רק לממשק SELV מתאים או דרך מתאם מבודד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html",
+            "https://www.meanwell.com/Upload/PDF/HLG-40H/HLG-40H-SPEC.PDF"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "משאבת ניקוז מאגר",
+          "watts": 180,
+          "nominalCurrentA": 0.783,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "leak",
+      "name": "איתור נזילות מים",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "משאבת ניקוז",
+          "watts": 350,
+          "nominalCurrentA": 1.522,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "שסתום הזנה NC",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "התראת נזילה",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recycling",
+      "name": "מיון ומחזור פסולת",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מנוע מסוע",
+          "watts": 180,
+          "nominalCurrentA": 0.783,
+          "profile": "controller",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+          "limitation": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+            "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "התראת עומס",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת בדיקה",
+          "watts": 20,
+          "nominalCurrentA": 0.087,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "geothermal",
+      "name": "משאבת חום גיאותרמית",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "משאבת סחרור",
+          "watts": 90,
+          "nominalCurrentA": 0.391,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מדחס חימום",
+          "watts": 1600,
+          "nominalCurrentA": 6.957,
+          "profile": "controller",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "מסילת 3.3V נפרדת מתאימה; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → ממסר → מגע יבש לבקר",
+          "limitation": "נדרשת כניסת מגע יבש מאושרת בבקר המזגן / המדחס / המנוע. אם אין כניסה כזו, יש לבחור מתנע או בקר ייעודי לפי נתוני המנוע; אין אישור למתג מדחס ישירות מהממסר המצולם.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview",
+            "https://learn.adafruit.com/introducing-adafruit-feather/feather-specification"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "התראת לולאה",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agriwater",
+      "name": "חיסכון במים בחקלאות",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "משאבת השקיה חסכונית",
+          "watts": 550,
+          "nominalCurrentA": 2.391,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "שסתום אזור",
+          "watts": 8,
+          "nominalCurrentA": 0.035,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "factory",
+      "name": "ניטור אולם ייצור",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מפוח פינוי",
+          "watts": 250,
+          "nominalCurrentA": 1.087,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מאוורר קירור",
+          "watts": 120,
+          "nominalCurrentA": 0.522,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "נורת התראה",
+          "watts": 10,
+          "nominalCurrentA": 0.043,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "restaurant",
+      "name": "ניהול מסעדה",
+      "channels": [
+        {
+          "channel": 1,
+          "load": "מחמם שמירת חום",
+          "watts": 800,
+          "nominalCurrentA": 3.478,
+          "profile": "heater",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC",
+          "supply": "5V DC למעגל כניסת SSR; ‏230V AC לעומס",
+          "chain": "GPIO 3.3V → MOSFET → SSR 5V",
+          "limitation": "נבחר במודל RM1A23D25 בלבד. צילום משפחת RM1A אינו מזהה סיומת. יש לבחור זרם, גוף קירור והגנות לפי העומס; לא PWM מהיר ולא חיבור רשת ל־GPIO.",
+          "sources": [
+            "https://www.adafruit.com/product/5648",
+            "https://learn.adafruit.com/adafruit-mosfet-driver/pinouts",
+            "https://www.gavazzionline.com/pdf/rm1a.pdf"
+          ]
+        },
+        {
+          "channel": 2,
+          "load": "מפוח מנדף",
+          "watts": 180,
+          "nominalCurrentA": 0.783,
+          "profile": "analogMotor",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": true,
+          "input": "I²C 3.3V · לא GPIO ישיר למנוע",
+          "supply": "3.3V DC למודול DFR0971; ‏230V AC לציוד הקצה",
+          "chain": "I²C 3.3V → DAC → בקר 0–10V",
+          "limitation": "דגם המנוע והבקר לא הוגדר. אין להניח שווסת תדר רגיל מתאים למנוע חד־פאזי. אין בידוד גלווני מובנה במודול DAC; נדרש ממשק SELV מבודד מהספק, או מתאם מבודד מתאים. Pull-ups של I²C אל 3.3V בלבד.",
+          "sources": [
+            "https://www.dfrobot.com/product-2613.html"
+          ]
+        },
+        {
+          "channel": 3,
+          "load": "תאורת עבודה",
+          "watts": 40,
+          "nominalCurrentA": 0.174,
+          "profile": "switch",
+          "logicInterfaceDocumented": true,
+          "requiresSpecificDownstreamModel": false,
+          "input": "GPIO 0/3.3V DC ל־SET",
+          "supply": "3.3V DC לסליל/כרטיס; כ־100mA לכל ממסר פעיל",
+          "chain": "GPIO 3.3V → Power Relay → עומס",
+          "limitation": "לא נבחר Mini Relay 2895, המוגבל ל־0.3A ב־250VAC. דירוג המגעים, זרם ההתנעה, סוג העומס והגנות דורשים בדיקה לפי דגם העומס. מתח ההפעלה של העומס נפרד ממתח הלוגיקה.",
+          "sources": [
+            "https://www.adafruit.com/product/3191",
+            "https://learn.adafruit.com/adafruit-power-relay-featherwing/overview"
+          ]
+        }
+      ]
+    }
+  ]
+}
